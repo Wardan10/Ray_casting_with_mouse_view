@@ -1,9 +1,107 @@
 #include<SFML/Graphics.hpp>
 #include<iostream>
 #include<cmath>
-#define debug_n(x) std::cout<<x<<std::endl;
-#define debug_t(x) std::cout<<x<<" ";
+#define debug_n(x) std::cout<<#x<<":"<<x<<std::endl;
+#define debug_t(x) std::cout<<#x<<":"<<x<<" ";
 #define PI 3.141592
+#define PI2 PI/2
+#define PI3 3*PI/2
+int map[10][10] = {
+		{1,1,1,1,1,1,1,1,1,1},
+		{1,0,0,0,0,0,0,0,0,1},
+		{1,0,0,0,0,1,0,0,0,1},
+		{1,0,1,0,0,0,0,1,1,1},
+		{1,0,1,1,0,0,0,0,0,1},
+		{1,0,0,0,0,0,0,0,0,1},
+		{1,0,0,0,1,0,1,1,1,1},
+		{1,0,1,0,1,0,0,0,0,1},
+		{1,0,0,0,1,0,0,0,0,1},
+		{1,1,1,1,1,1,1,1,1,1},
+};
+double dist(float ax, float ay, float bx, float by) {
+	return sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+}
+sf::Vector2f find_end(sf::Vector2f start, float player_angle_yaw) {
+	int mx, my;
+	float rx, ry, ra, xo, yo;
+	int count = 0;
+	//  Horizontal line // 
+	float HOR = INT32_MAX;
+	float aTan = -1 / tan(player_angle_yaw);
+	ra = player_angle_yaw;
+	if (ra == 0 || ra == PI) {
+		rx = start.x;
+		ry = start.y;
+		count = 10;
+	}
+	if (ra != 0 && ra < PI) {
+		ry = floor(start.y / 100) * 100 - 1;
+		rx = (ry - start.y) * aTan + start.x;
+		yo = -100;
+		xo = yo * aTan;
+	}
+	if (ra > PI) {
+		ry = floor(start.y / 100) * 100 + 100;
+		rx = (ry - start.y) * aTan + start.x;
+		yo = 100;
+		xo = yo * aTan;
+	}
+	while (count < 10) {
+		mx = floor(rx / 100);
+		my = floor(ry / 100);
+		if (mx >= 0 && my >= 0 && mx < 10 && my < 10 && map[my][mx] == 1) {
+			count = 10;
+			HOR = dist(start.x,start.y, rx, ry);
+		}
+		else {
+			rx += xo;
+			ry += yo;
+			count++;
+		}
+	}
+	// Vertical line // 
+	int vmx, vmy;
+	float vrx, vry, vra, vxo, vyo;
+	float VER = INT32_MAX;
+	count = 0;
+	float Tan = -tan(player_angle_yaw);
+	vra = player_angle_yaw;
+	if (vra == 0 || vra == PI2) {
+		vrx = start.x;
+		vry = start.y;
+		count = 10;
+	}
+	if (vra > PI2 || vra < PI3) {
+		vrx = floor(start.x / 100) * 100 - 1;
+		vry = (vrx - start.x) * Tan + start.y;
+		vxo = -100;
+		vyo = vxo * Tan;
+	}
+	if (vra <PI2 || vra>PI3) {
+		vrx = floor(start.x / 100) * 100 + 100;
+		vry = (vrx - start.x) * Tan + start.y;
+		vxo = 100;
+		vyo = vxo * Tan;
+	}
+	while (count < 10) {
+		vmx = floor(vrx / 100);
+		vmy = floor(vry / 100);
+		if (vmx >= 0 && vmy >= 0 && vmx < 10 && vmy < 10 && map[vmy][vmx] == 1) {
+			count = 10;
+			VER = dist(start.x, start.y, vrx, vry);
+		}
+		else {
+			vrx += vxo;
+			vry += vyo;
+			count++;
+		}
+	}
+	if (HOR < VER) {
+		vry = ry;
+		vrx = rx;
+	}
+	return { vrx,vry };
+}
 int main(){
 	sf::RenderWindow* window;
 	sf::Event Ev;
@@ -21,18 +119,6 @@ int main(){
 	int speed = 3;
 	sf::RectangleShape player;
  	player.setFillColor(sf::Color::Green);
-	int map[10][10] = {
-		{1,1,1,1,1,1,1,1,1,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,0,1,0,0,0,1},
-		{1,0,1,0,0,0,0,1,1,1},
-		{1,0,1,1,0,0,0,0,0,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,1,0,1,1,1,1},
-		{1,0,1,0,1,0,0,0,0,1},
-		{1,0,0,0,1,0,0,0,0,1},
-		{1,1,1,1,1,1,1,1,1,1},
-	};
 	player.setPosition({ 100,100 });
 	player.setSize({ 20,20 });
 	while(game){
@@ -100,26 +186,26 @@ int main(){
 		// Drawing lines
 		sf::VertexArray line(sf::Lines, 2);
 		line[0].position = { player_pos.x + player.getSize().x / 2, player_pos.y + player.getSize().y / 2 }; // Starting point
+		line[1].position = find_end({ line[0].position.x,line[0].position.y }, player_angle_yaw);
 		line[0].color = sf::Color::Blue;
 		line[1].color = sf::Color::Blue;
-		int line_length = 100;
-		line[1].position = { line[0].position.x + line_length * cosf(player_angle_yaw),line[0].position.y - line_length * sinf(player_angle_yaw)};
 		window->draw(line);
 		float left_yaw= player_angle_yaw;
 		float right_yaw = player_angle_yaw;
 		int ray_count = 50;
+		int line_length = 100;
 		for (int i = 0; i < ray_count; i++) {
 			left_yaw += PI / (6*ray_count);
 			if (left_yaw > 2 * PI)left_yaw -= 2 * PI;
 			// handling the line!
-			line[1].position = { line[0].position.x + line_length * cosf(left_yaw),line[0].position.y - line_length * sinf(left_yaw) };// Ending point
+			line[1].position = find_end({ line[0].position.x,line[0].position.y }, left_yaw);// Ending point
 			window->draw(line);
 		}
 		for (int i = 0; i < ray_count; i++) {
 			right_yaw -= PI / (6*ray_count);
 			if(right_yaw < 0)right_yaw += 2 * PI;
 			// handling the line!
-			line[1].position = { line[0].position.x + line_length * cosf(right_yaw),line[0].position.y - line_length * sinf(right_yaw) };// Ending point
+			line[1].position =find_end({ line[0].position.x,line[0].position.y },right_yaw);// Ending point
 			window->draw(line);
 		}
 		// display the screen!
@@ -128,36 +214,3 @@ int main(){
 	delete window;
 	return 0;
 }
-// handling main line:
-/*int line_length, mx, my, mp; float rx, ry, ra, xo, yo;
-int count = 0;
-float aTan = -1 / tan(player_angle_yaw);
-ra = player_angle_yaw;
-if(ra>PI){
-	ry = static_cast<int>((line[0].position.y/ 100) * 100)+100;
-	rx = (line[0].position.y - ry) * aTan + line[0].position.x;
-	yo = 100;
-	xo = -yo * aTan;
-}
-if (ra < PI) {
-	ry = static_cast<int>((line[0].position.y / 100) * 100)-1;
-	rx = (line[0].position.y - ry) * aTan + line[0].position.x;
-	yo = 100;
-	xo = -yo * aTan;
-}
-if (ra == 0 || ra == PI) {
-	rx = line[0].position.x;
-	ry = line[0].position.y;
-	count = 10;
-}
-while (count < 10) {
-	mx = rx/ 100;
-	my = ry/ 100;
-	if (mx*10+my<100 && map[mx][my] == 1)count = 10;
-	else {
-		rx += xo;
-		ry += yo;
-		count++;
-	}
-}
-line[1].position = { rx,ry };*/
