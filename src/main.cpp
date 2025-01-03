@@ -1,27 +1,5 @@
-#include<SFML/Graphics.hpp>
-#include<iostream>
-#include<cmath>
-#define debug_n(x) std::cout<<#x<<":"<<x<<std::endl;
-#define debug_t(x) std::cout<<#x<<":"<<x<<" ";
-#define PI 3.141592
-#define PI2 PI/2
-#define PI3 3*PI/2
-int map[10][10] = {
-		{1,1,1,1,1,1,1,1,1,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,0,1,0,0,0,1},
-		{1,0,1,0,0,0,0,1,1,1},
-		{1,0,1,1,0,0,0,0,0,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,1,0,1,1,1,1},
-		{1,0,1,0,1,0,0,0,0,1},
-		{1,0,0,0,1,0,0,0,0,1},
-		{1,1,1,1,1,1,1,1,1,1},
-};
-double dist(float ax, float ay, float bx, float by) {
-	return sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
-}
-sf::Vector2f find_end(sf::Vector2f start, float player_angle_yaw) {
+#include<core.h>
+std::pair<std::pair<int,bool>,sf::Vector2f> find_end(sf::Vector2f start, float player_angle_yaw, int map_unit) {
 	int mx, my;
 	float rx, ry, ra, xo, yo;
 	int count = 0;
@@ -35,23 +13,23 @@ sf::Vector2f find_end(sf::Vector2f start, float player_angle_yaw) {
 		count = 10;
 	}
 	if (ra != 0 && ra < PI) {
-		ry = floor(start.y / 100) * 100 - 1;
+		ry = floor(start.y / map_unit) * map_unit - 1;
 		rx = (ry - start.y) * aTan + start.x;
-		yo = -100;
+		yo = -map_unit;
 		xo = yo * aTan;
 	}
 	if (ra > PI) {
-		ry = floor(start.y / 100) * 100 + 100;
+		ry = floor(start.y / map_unit) * map_unit + map_unit;
 		rx = (ry - start.y) * aTan + start.x;
-		yo = 100;
+		yo = map_unit;
 		xo = yo * aTan;
 	}
 	while (count < 10) {
-		mx = floor(rx / 100);
-		my = floor(ry / 100);
+		mx = floor(rx / map_unit);
+		my = floor(ry / map_unit);
 		if (mx >= 0 && my >= 0 && mx < 10 && my < 10 && map[my][mx] == 1) {
 			count = 10;
-			HOR = dist(start.x,start.y, rx, ry);
+			HOR = dist(start.x, start.y, rx, ry);
 		}
 		else {
 			rx += xo;
@@ -72,20 +50,20 @@ sf::Vector2f find_end(sf::Vector2f start, float player_angle_yaw) {
 		count = 10;
 	}
 	if (vra > PI2 || vra < PI3) {
-		vrx = floor(start.x / 100) * 100 - 1;
+		vrx = floor(start.x / map_unit) * map_unit - 1;
 		vry = (vrx - start.x) * Tan + start.y;
-		vxo = -100;
+		vxo = -map_unit;
 		vyo = vxo * Tan;
 	}
 	if (vra <PI2 || vra>PI3) {
-		vrx = floor(start.x / 100) * 100 + 100;
+		vrx = floor(start.x / map_unit) * map_unit + map_unit;
 		vry = (vrx - start.x) * Tan + start.y;
-		vxo = 100;
+		vxo = map_unit;
 		vyo = vxo * Tan;
 	}
 	while (count < 10) {
-		vmx = floor(vrx / 100);
-		vmy = floor(vry / 100);
+		vmx = floor(vrx / map_unit);
+		vmy = floor(vry / map_unit);
 		if (vmx >= 0 && vmy >= 0 && vmx < 10 && vmy < 10 && map[vmy][vmx] == 1) {
 			count = 10;
 			VER = dist(start.x, start.y, vrx, vry);
@@ -96,121 +74,189 @@ sf::Vector2f find_end(sf::Vector2f start, float player_angle_yaw) {
 			count++;
 		}
 	}
+	bool hor_ver = true;
 	if (HOR < VER) {
 		vry = ry;
 		vrx = rx;
+		hor_ver = false;
+		VER = HOR;
 	}
-	return { vrx,vry };
+	return { {VER,hor_ver},{ vrx,vry} };
 }
-int main(){
-	sf::RenderWindow* window;
+int main(){	
+	Window two_D(800, 800,"2D view");
 	sf::Event Ev;
-	sf::VideoMode video;
-	video.height=1000;
-	video.width=1000;
-	window = new sf::RenderWindow(video, "Ray casting!", sf::Style::Default);
-	window->setFramerateLimit(60);
-	window->setMouseCursorVisible(false);
+	unsigned int map_unit = two_D.map_unit;
+	two_D.window->setMouseCursorVisible(false);
 	float player_angle_yaw = 0.0f;             // horizontal view
 	float player_angle_pitch = 0.0f;           // vertical view
 	float mouse_sensitivity = 0.001;		   // sensitivity
-	const sf::Vector2i Window_center((window->getSize().x) / 2, (window->getSize().y) / 2);
-	bool game = true;
-	int speed = 3;
+	sf::Vector2i Window_center((two_D.window->getSize().x) / 2, (two_D.window->getSize().y) / 2);
+	std::cout << map_unit << std::endl;
+	int speed = sqrt(900/map_unit);
+	std::cout << speed << std::endl;
 	sf::RectangleShape player;
  	player.setFillColor(sf::Color::Green);
-	player.setPosition({ 100,100 });
-	player.setSize({ 20,20 });
+	player.setPosition({ static_cast<float>(map_unit),static_cast<float>(map_unit)});
+	player.setSize({ static_cast<float>(map_unit/5),static_cast<float>(map_unit/5) });
+	bool game = true;
+	bool game_paused = false;
+	HWND handle2D = two_D.window->getSystemHandle();
+	SetWindowPos(handle2D, HWND_TOP, 100, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	// 3D window:
+	Window Three_D(800, 802, "3D view");
+	HWND handle3D = Three_D.window->getSystemHandle();
+	SetWindowPos(handle3D, HWND_TOP, 1000, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 	while(game){
+		if (!two_D.window->hasFocus() && !Three_D.window->hasFocus())continue; // if game tab is in background stall the game
 		// key management:
-		while (window->pollEvent(Ev)) {
+		// 2D Window events:
+		while (two_D.window->pollEvent(Ev)) {
 			if (Ev.type == sf::Event::Closed) {
-				window->close();
 				game = false;
 				break;
 			}
 			else if (Ev.type == sf::Event::KeyPressed && Ev.key.code == sf::Keyboard::Escape) {
-				window->close();
-				game = false;
+				game_paused^=true;
+				two_D.window->setMouseCursorVisible(game_paused);
 				break;
 			}
+			else if (Ev.type == sf::Event::Resized) {
+				// update 
+				map_unit = fmin(Ev.size.height, Ev.size.width)/10;
+				speed = sqrt(900/map_unit);
+				debug_t(Ev.size.height);debug_n(Ev.size.width)
+				debug_n(map_unit)
+				sf::Vector2f old_player_pos = player.getPosition();
+				player.setPosition({
+					old_player_pos.x / two_D.map_unit * map_unit,
+					old_player_pos.y / two_D.map_unit * map_unit
+					});
+				// set new position according to old postion:
+				//player.setPosition({ static_cast<float>(map_unit),static_cast<float>(map_unit) });
+				player.setSize({ static_cast<float>(map_unit / 5),static_cast<float>(map_unit / 5) });
+				Window_center.x = (two_D.window->getSize().x) / 2; Window_center.y = (two_D.window->getSize().y) / 2;
+			}
 		}
+		// 3D Window events:
+		while (Three_D.window->pollEvent(Ev)) {
+
+		}
+		// 3D Window events:
+		// empty:
+		if (!game)break;
+		else if (game_paused)continue;
 		sf::Vector2f player_pos = player.getPosition();
 		// Movement: 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-			if (map[static_cast<int>(player_pos.y + speed * -1.f) / 100][static_cast<int>(player_pos.x) / 100] == 0
-				&& map[static_cast<int>(player_pos.y + speed * -1.f) / 100][static_cast<int>(player_pos.x + player.getSize().x) / 100] == 0) {
+			if (map[static_cast<int>(player_pos.y + speed * -1.f) / map_unit][static_cast<int>(player_pos.x) / map_unit] == 0
+				&& map[static_cast<int>(player_pos.y + speed * -1.f) / map_unit][static_cast<int>(player_pos.x + player.getSize().x) / map_unit] == 0) {
 				player.move({ 0.f, speed * -1.f });
 			}
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-			if (map[static_cast<int>(player_pos.y) / 100][static_cast<int>(player_pos.x + speed * -1.f) / 100] == 0
-				&& map[static_cast<int>(player_pos.y + player.getSize().y) / 100][static_cast<int>(player_pos.x + speed * -1.f) / 100] == 0) {
+			if (map[static_cast<int>(player_pos.y) / map_unit][static_cast<int>(player_pos.x + speed * -1.f) / map_unit] == 0
+				&& map[static_cast<int>(player_pos.y + player.getSize().y) / map_unit][static_cast<int>(player_pos.x + speed * -1.f) / map_unit] == 0) {
 				player.move({ speed * -1.f, 0.f });
 			}
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-			if (map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y)/100][static_cast<int>(player_pos.x) / 100] == 0
-				&& map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y) / 100][static_cast<int>(player_pos.x + player.getSize().x) / 100] == 0){
+			if (map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y)/map_unit][static_cast<int>(player_pos.x) / map_unit] == 0
+				&& map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y) / map_unit][static_cast<int>(player_pos.x + player.getSize().x) / map_unit] == 0){
 					player.move({ 0.f, speed * 1.f });
 			}
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-			if (map[static_cast<int>(player_pos.y) / 100][static_cast<int>(player_pos.x + speed * 1.f +player.getSize().x) / 100] == 0
-				&& map[static_cast<int>(player_pos.y +player.getSize().y)/ 100 ][static_cast<int>(player_pos.x + speed * 1.f + player.getSize().x) / 100] == 0) {
+			if (map[(static_cast<int>(player_pos.y) / map_unit)][static_cast<int>(player_pos.x + speed * 1.f +player.getSize().x) / map_unit] == 0
+				&& map[static_cast<int>(player_pos.y +player.getSize().y)/ map_unit ][static_cast<int>(player_pos.x + speed * 1.f + player.getSize().x) / map_unit] == 0) {
 				player.move({ speed * 1.f, 0.f });
 			}
 		}
 		// Update Map:
-		window->clear();
+		two_D.window->clear();
+		Three_D.window->clear();
 		sf::RectangleShape walls;
-		walls.setSize({ 100,100});
+		walls.setSize({ static_cast<float>(map_unit),static_cast<float>(map_unit)});
+		//debug_n(map_unit)
 		walls.setFillColor({ sf::Color::Red});
 		for (int i = 0; i < 10; i++){
 			for (int j = 0; j < 10; j++) {
 				if (map[i][j] == 1) {
-					walls.setPosition({static_cast<float>(j * 100),static_cast<float>(i * 100) });
-					window->draw(walls);
+					walls.setPosition({static_cast<float>(j * map_unit),static_cast<float>(i * map_unit) });
+					two_D.window->draw(walls);
 				}
 			}
 		}
 		// draw player
-		window->draw(player);
 		// Updating angle:
-		sf::Vector2i Mouse_pos=sf::Mouse::getPosition(*window);
+		sf::Vector2i Mouse_pos=sf::Mouse::getPosition(*two_D.window);
 		float Diff = mouse_sensitivity * (Mouse_pos.x - Window_center.x);
 		player_angle_yaw -= Diff;
 		if (player_angle_yaw > 2 * PI)player_angle_yaw -= 2 * PI;
 		else if (player_angle_yaw < 0)player_angle_yaw += 2 * PI;
-		sf::Mouse::setPosition(Window_center,*window);
+		sf::Mouse::setPosition(Window_center,*two_D.window);
 		// Drawing lines
 		sf::VertexArray line(sf::Lines, 2);
 		line[0].position = { player_pos.x + player.getSize().x / 2, player_pos.y + player.getSize().y / 2 }; // Starting point
-		line[1].position = find_end({ line[0].position.x,line[0].position.y }, player_angle_yaw);
+		auto x=find_end({ line[0].position.x,line[0].position.y }, player_angle_yaw, map_unit);
+		line[1].position = x.second;
+		// first wall test:
+		float len = x.first.first;
+		float height = 16000 / len;
+		sf::RectangleShape wall;
+		wall.setSize({ 2,height});
+		wall.setPosition({ 400,(800 - height) / 2});
+		if (x.first.second)wall.setFillColor(sf::Color(255, 0, 0, 128));
+		else wall.setFillColor(sf::Color(255, 0, 0));
+		Three_D.window->draw(wall);
+
 		line[0].color = sf::Color::Blue;
 		line[1].color = sf::Color::Blue;
-		window->draw(line);
+		two_D.window->draw(line);
+		two_D.window->draw(player);
 		float left_yaw= player_angle_yaw;
 		float right_yaw = player_angle_yaw;
-		int ray_count = 50;
-		int line_length = 100;
-		for (int i = 0; i < ray_count; i++) {
+		int ray_count = 200;
+		for (int i = 1; i <=ray_count; i++) {
 			left_yaw += PI / (6*ray_count);
 			if (left_yaw > 2 * PI)left_yaw -= 2 * PI;
 			// handling the line!
-			line[1].position = find_end({ line[0].position.x,line[0].position.y }, left_yaw);// Ending point
-			window->draw(line);
+			auto x=find_end({ line[0].position.x,line[0].position.y }, left_yaw,map_unit);// Ending point
+			line[1].position = x.second;
+			//two_D.window->draw(line);
+			// 
+			// 3D window wall:
+			float len = x.first.first;
+			float height = 16000 / len;
+			wall.setSize({ 4,height });
+			wall.setPosition({static_cast<float>(400-2*i),(800 - height) / 2 });
+			if(x.first.second)wall.setFillColor(sf::Color(255,0,0,128));
+			else wall.setFillColor(sf::Color(255,0,0));
+			Three_D.window->draw(wall);
 		}
 		for (int i = 0; i < ray_count; i++) {
 			right_yaw -= PI / (6*ray_count);
 			if(right_yaw < 0)right_yaw += 2 * PI;
 			// handling the line!
-			line[1].position =find_end({ line[0].position.x,line[0].position.y },right_yaw);// Ending point
-			window->draw(line);
+			auto x=find_end({ line[0].position.x,line[0].position.y },right_yaw,map_unit);// Ending point
+			line[1].position = x.second;
+			//two_D.window->draw(line);
+
+			// 3D window wall:
+			float len = x.first.first;
+			float height = 16000 / len;
+			wall.setSize({ 4,height });
+			wall.setPosition({ static_cast<float>(402 + 2 * i),(800 - height) / 2 });
+			if (x.first.second)wall.setFillColor(sf::Color(255, 0, 0, 128));
+			else wall.setFillColor(sf::Color(255, 0, 0));
+			Three_D.window->draw(wall);
 		}
 		// display the screen!
-		window->display();
+		two_D.window->display();
+		Three_D.window->display();
 	}
-	delete window;
+	two_D.close_window();
+	Three_D.close_window();
 	return 0;
 }
