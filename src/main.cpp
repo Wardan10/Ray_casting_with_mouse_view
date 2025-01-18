@@ -103,7 +103,6 @@ int main(){
 	bool game_paused = false;
 	HWND handle2D = two_D.window->getSystemHandle();
 	SetWindowPos(handle2D, HWND_TOP, 100, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
 	// 3D window:
 	Window Three_D(800, 802, "3D view");
 	HWND handle3D = Three_D.window->getSystemHandle();
@@ -149,28 +148,37 @@ int main(){
 		else if (game_paused)continue;
 		sf::Vector2f player_pos = player.getPosition();
 		// Movement: 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-			if (map[static_cast<int>(player_pos.y + speed * -1.f) / map_unit][static_cast<int>(player_pos.x) / map_unit] == 0
-				&& map[static_cast<int>(player_pos.y + speed * -1.f) / map_unit][static_cast<int>(player_pos.x + player.getSize().x) / map_unit] == 0) {
-				player.move({ 0.f, speed * -1.f });
+		float direction = player_angle_yaw;
+		bool move = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))move = true;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))direction += PI2, move = true;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))direction += PI, move = true;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))direction += PI3, move = true;
+		if (move) {
+			sf::Vector2f final_pos({ player_pos.x + static_cast<float>(speed * cos(direction)),
+									 player_pos.y - static_cast<float>(speed * sin(direction)) });
+			bool test = true;
+			if (map[SCI(final_pos.y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0) {
+				player.setPosition(final_pos);
+				test = false;
 			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-			if (map[static_cast<int>(player_pos.y) / map_unit][static_cast<int>(player_pos.x + speed * -1.f) / map_unit] == 0
-				&& map[static_cast<int>(player_pos.y + player.getSize().y) / map_unit][static_cast<int>(player_pos.x + speed * -1.f) / map_unit] == 0) {
-				player.move({ speed * -1.f, 0.f });
+			final_pos = { player_pos.x + static_cast<float>(speed * cos(direction)),player_pos.y };
+			if (test && map[SCI(final_pos.y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0) {
+				player.setPosition(final_pos);
+				test = false;
 			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-			if (map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y)/map_unit][static_cast<int>(player_pos.x) / map_unit] == 0
-				&& map[static_cast<int>(player_pos.y + speed * 1.f + player.getSize().y) / map_unit][static_cast<int>(player_pos.x + player.getSize().x) / map_unit] == 0){
-					player.move({ 0.f, speed * 1.f });
-			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-			if (map[(static_cast<int>(player_pos.y) / map_unit)][static_cast<int>(player_pos.x + speed * 1.f +player.getSize().x) / map_unit] == 0
-				&& map[static_cast<int>(player_pos.y +player.getSize().y)/ map_unit ][static_cast<int>(player_pos.x + speed * 1.f + player.getSize().x) / map_unit] == 0) {
-				player.move({ speed * 1.f, 0.f });
+			final_pos = {player_pos.x,player_pos.y - static_cast<float>(speed * sin(direction))};
+			if (test && map[SCI(final_pos.y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
+				map[SCI(final_pos.y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0 &&
+				map[SCI(final_pos.y + player.getSize().y) / map_unit][SCI(final_pos.x + player.getSize().x) / map_unit] == 0) {
+				player.setPosition(final_pos);
 			}
 		}
 		// Update Map:
@@ -224,7 +232,7 @@ int main(){
 			// handling the line!
 			auto x=find_end({ line[0].position.x,line[0].position.y }, left_yaw,map_unit);// Ending point
 			line[1].position = x.second;
-			//two_D.window->draw(line);
+			/*two_D.window->draw(line);*/
 			// 
 			// 3D window wall:
 			float len = x.first.first;

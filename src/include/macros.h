@@ -4,6 +4,8 @@
 #define PI 3.141592
 #define PI2 PI/2
 #define PI3 3*PI/2
+#define SCF(x) static_cast<float>(x)
+#define SCI(x) static_cast<int>(x)
 int map[10][10] = {
 		{1,1,1,1,1,1,1,1,1,1},
 		{1,0,0,0,0,0,0,0,0,1},
