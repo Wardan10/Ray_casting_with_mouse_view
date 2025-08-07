@@ -1,9 +1,24 @@
 #include "game_math.h"
 #include <SFML/System.hpp>
-#include "macros.h"
+#include "config.h"
+
 double dist(float ax, float ay, float bx, float by) {
 	return sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
 }
+
+double angleFromAToB(float a_x, float a_y, float b_x, float b_y) {
+    float dx = b_x - a_x;
+	float dy = a_y - b_y; 		  // since window dimensions for y are inverted
+    float angle = atan2(dy, dx);  // Returns angle in range [-PI, PI]
+    if(angle < 0)angle += 2*PI;
+    return angle;
+}
+
+/// @brief checks if the player is inside any of the walls
+/// @param final_pos - position to be checked
+/// @param map_unit 
+/// @param player_size  
+/// @return 
 bool inside_map(sf::Vector2f final_pos,int map_unit,sf::Vector2f player_size){
 	return( 
 		map[SCI(final_pos.y) / map_unit][SCI(final_pos.x) / map_unit] == 0 &&
@@ -11,7 +26,14 @@ bool inside_map(sf::Vector2f final_pos,int map_unit,sf::Vector2f player_size){
 		map[SCI(final_pos.y) / map_unit][SCI(final_pos.x + player_size.x) / map_unit] == 0 &&
 		map[SCI(final_pos.y + player_size.y) / map_unit][SCI(final_pos.x + player_size.x) / map_unit] == 0);
 }
-std::pair<std::pair<int, bool>, sf::Vector2f> find_end(sf::Vector2f start, float player_angle_yaw, int map_unit) {
+
+
+/// @brief main raycasting logic where it checks each square whether the ray is intercepted or not.
+/// @param start Position of player
+/// @param player_angle_yaw 
+/// @param map_unit 
+/// @return 
+std::pair<std::pair<float, bool>, sf::Vector2f> find_end(sf::Vector2f start, float player_angle_yaw, int map_unit) {
 	int mx, my;
 	float rx, ry, ra, xo, yo;
 	int count = 0;
