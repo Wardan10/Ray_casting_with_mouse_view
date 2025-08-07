@@ -1,19 +1,21 @@
 #include "window.h"
-Window::Window(int h,int w,std::string title) {
+Window_manage::Window_manage(u_int16_t h,u_int16_t w,std::string title) {
 	this->framerate = 60;
 	sf::VideoMode video;
 	video.height = h;
 	video.width = h;
-	map_unit = fmin(h, w) / 10;
-	this->window = new sf::RenderWindow(video, title, sf::Style::Default);
-	window->setFramerateLimit(framerate);
+	map_unit = std::min(h, w)/10;
+	this->window_manage = new sf::RenderWindow(video, title, sf::Style::Default);
+	window_manage->setFramerateLimit(framerate);
 }
-void Window::close_window() {
-	if (this->window->isOpen())window->close();
-	delete this->window;
+
+void Window_manage::close_window() {
+	if (this->window_manage->isOpen())window_manage->close();
+	delete this->window_manage;
 }
-void Window::change_framerate(unsigned int x) {
+
+void Window_manage::change_framerate(unsigned int x) {
 	framerate = x;
-	this->window->setFramerateLimit(x);
+	this->window_manage->setFramerateLimit(x);
 	return;
 }
