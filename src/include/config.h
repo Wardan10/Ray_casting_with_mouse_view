@@ -1,5 +1,12 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
+#include<utility>
+
+// debug envi for testing 
+#define DEBUG_2D
+#define DEBUG_3D 
+
+
 #define debug_n(x) std::cout<<#x<<":"<<x<<std::endl;
 #define debug_t(x) std::cout<<#x<<":"<<x<<" ";
 #define PI 3.141592
@@ -13,11 +20,15 @@ extern int speed;
 extern int player_size;
 extern int HEIGHT;
 extern int WIDTH;
+extern bool player_moved_global;
+extern std::pair<float,float> player_pos_global;
+extern bool player1_moved_global;
+extern std::pair<float,float> player1_pos_global;
+extern bool STOP_GAME;
 // environment:
 //--------------------------------------COLORS-------------------------------
 #define GREEN sf::Color::Green
 #define RED   sf::Color::Red
 #define BLUE  sf::Color::Blue
 #define BLACK sf::Color::Black
-
 #endif
