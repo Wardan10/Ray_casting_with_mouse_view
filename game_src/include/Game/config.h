@@ -3,7 +3,7 @@
 #include<utility>
 
 // debug envi for testing 
-#define DEBUG_2D
+// #define DEBUG_2D
 #define DEBUG_3D 
 
 
