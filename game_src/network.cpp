@@ -66,10 +66,10 @@ void Network::send_data_loop(){
     printf("exiting send_data_loop..\n");
 }
 
-void Network::initialise_connection(){
+void Network::initialise_connection(std::string send_stream,std::string get_stream){
     try{
-        send_data= new Shm("send_data", TOTAL_SIZE, true);
-        get_data= new Shm("get_data", TOTAL_SIZE, true);
+        send_data= new Shm(send_stream.c_str(), TOTAL_SIZE, true);
+        get_data= new Shm(get_stream.c_str(), TOTAL_SIZE, true);
     }
     catch (const std::exception& e) {
         std::cerr << "Caught exception: " << e.what() << std::endl;

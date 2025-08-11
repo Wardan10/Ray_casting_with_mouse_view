@@ -1,4 +1,5 @@
 #include"game_window.h"
+#include"network.h"
 
 game_window::game_window(std::string title){
     player_angle_yaw=5.0f ;             // horizontal view
@@ -28,7 +29,6 @@ game_window::game_window(std::string title){
 	threeD_handle = ThreeD->window_manage->getSystemHandle();
 }
 
-
 /// @brief render other players
 float game_window::manage_players(float player_yaw){
 	sf::Vector2f player_pos=player.getPosition();
@@ -46,27 +46,41 @@ float game_window::manage_players(float player_yaw){
 	}
 	return player_len;
 }
-
 /// @brief Main game loop using 2 elements from the window class for 2d and 3d view
 void game_window::game_loop(){
     sf::Vector2i window_manage_center((ThreeD->window_manage->getSize().x) / 2, (ThreeD->window_manage->getSize().y) / 2);
     draw_2d_walls();
     while(run_game){
 		// events
-		if(!ThreeD->window_manage->hasFocus())continue;
-        manage_events();
+		// if(!ThreeD->window_manage->hasFocus())continue;
+		if(ThreeD->window_manage->hasFocus())manage_events();
+		manage_events();
 		if (!run_game)break;
-		else if (game_paused)continue;
+		// else if (game_paused)continue;
 		// player handling
 		sf::Vector2f player_pos=player.getPosition();
 		sf::Vector2f player_size=player.getSize();
 		float direction = player_angle_yaw;
 		clear_entities();// clear entities
-		Movement(direction,player_pos,player_size); // move the player
-		move_players_test();
+		if(ThreeD->window_manage->hasFocus())player_moved=Movement(direction,player_pos,player_size); // move the player
+		if(player_moved ){
+			player_moved_global=true;
+			auto curr_pos=player.getPosition();
+			player_pos_global.first=curr_pos.x;
+			player_pos_global.second=curr_pos.y;
+		}
+		if(player1_moved_global){
+			player1_moved_global=false;
+			for(auto& i:Players){
+				i.setPosition({player1_pos_global.first,player1_pos_global.second});
+			}
+		}
+		// move_players_test();
 		// Update map
 		ThreeD->window_manage->clear();	
-		manage_mouse(window_manage_center);
+		if(!game_paused){
+			manage_mouse(window_manage_center);
+		}	
 		// Drawing lines
 		main_line[0].position = { player_pos.x + player_size.x / 2, player_pos.y + player_size.y / 2 }; // Starting point
 		draw_3d_walls(main_line,player_angle_yaw,0);
@@ -102,6 +116,7 @@ void game_window::manage_events(){
     while (ThreeD->window_manage->pollEvent(Ev)) {
         if (Ev.type == sf::Event::Closed) {
             run_game = false;
+			STOP_GAME=true;
             break;
         }
         else if (Ev.type == sf::Event::KeyPressed && Ev.key.code == sf::Keyboard::Escape) {
@@ -182,7 +197,7 @@ void game_window::draw_entities(){
 	}
 }
 
-void game_window::Movement(float& direction,sf::Vector2f& player_pos,const sf::Vector2f& player_size){
+bool game_window::Movement(float& direction,sf::Vector2f& player_pos,const sf::Vector2f& player_size){
 	bool move = false;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))move = true;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))direction += PI2, move = true;
@@ -209,6 +224,7 @@ void game_window::Movement(float& direction,sf::Vector2f& player_pos,const sf::V
 		}
 		if(!can_player_move)player.setPosition(player_pos);
 	}
+	return move;
 }
 
 void game_window::close_game(){
@@ -244,21 +260,6 @@ void game_window::draw_3d_walls(sf::VertexArray& line, float player_angle_yaw,fl
 		// line[1].position=new_end;
 	}
 }
-
-void game_window::move_players_test(){
-	int len=Players.size();
-	for(int j=0;j<len;j++){
-		auto& i=Players[j];
-		auto pos=i.getPosition();
-		sf::Vector2f next_pos({pos.x+speed*players_dir[j],pos.y});
-		float radius=i.getRadius();
-		if(inside_map(next_pos,map_unit,{2*radius,2*radius})){
-			i.setPosition(next_pos);
-		}
-		else players_dir[j]=-players_dir[j];
-	}
-}
-
 
 std::pair<sf::WindowHandle,sf::WindowHandle> game_window::get_handles(){
 	return {twod_handle,threeD_handle};

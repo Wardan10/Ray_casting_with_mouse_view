@@ -1,32 +1,23 @@
 #include"game_window.h"
-void Initialise_environment(std::pair<sf::WindowHandle,sf::WindowHandle> handles){
-	#ifdef _WIN32
-	HWND handle2D = handles.first;
-	SetWindowPos(handle2D, HWND_TOP, 100, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-	Window Three_D(800, 802, "3D view");
-	HWND handle3D = handles.second;
-	SetWindowPos(handle3D, HWND_TOP, 1000, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-	#elif defined(__linux__)
-	::Window handle2D = handles.first;
-	::Window handle3D = handles.second;
-    Display* display;
-	display = XOpenDisplay(NULL);
-	if (display == NULL) {
-		std::cerr << "Failed to open display!" << std::endl;
-		return;
-	}
-	XMoveWindow(display,handle2D, 100, 100);
-	XMoveWindow(display,handle3D, 1000, 100);
-	XFlush(display);
-	#endif
-}
+#include"environment.h"
+#include"network.h"
 
-int main(){
+int main(int argc, char* argv[]){
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <send_shm_name> <recv_shm_name>\n";
+        return 1;
+    }
+    std::string send_name = argv[1];
+    std::string recv_name = argv[2];
     game_window main_game("RAYCASTING");
-    // std::pair<sf::WindowHandle,sf::WindowHandle> handles=main_game.get_handles();
-    Initialise_environment(main_game.get_handles());
+    std::pair<sf::WindowHandle,sf::WindowHandle> handles=main_game.get_handles();
+    Initialise_environment(handles);
+    Network network;
+    std::cout<<"Shared memory initialised with "<<send_name<<" "<<recv_name<<std::endl;
+    network.initialise_connection(send_name,recv_name);
     main_game.game_loop();
     std::cout<<"Exited game loop..Clearning resources"<<std::endl;
+    network.close_connection();
     main_game.close_game();
     return 0;
 }
