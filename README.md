@@ -25,10 +25,10 @@ This project is a **2.5D** raycasting-based game engine built in C++ (with SFML)
                         │  3. Write to RECV shm      │
                         │  4. Read from SEND shm     │
                         └───────────┬────────────────┘
-                                │
-                        RECV shm   │   SEND shm
-                (game reads ↓)   │   (game writes ↑)
-                                │
+                                    │
+                         RECV shm   │   SEND shm
+                   (game reads ↓)   │   (game writes ↑)
+                                    │
                         ┌───────────┴────────────────┐
                         │   C++ Raycasting Engine    │
                         │────────────────────────────│
