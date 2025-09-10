@@ -1,12 +1,12 @@
 # Raycasting 2D space to 3D
 
-This project is a **2.5D** raycasting-based game engine built in C++ (with SFML) that simulates a 3D environment using efficient 2D rendering techniques — inspired by early classics like Wolfenstein 3D.
+**2.5D** raycasting-based game engine built in C++ (with SFML) that simulates a 3D environment using efficient 2D rendering techniques — inspired by early classics like Wolfenstein 3D.
 
 ## Features:
 
 * Real-time raycasting renderer for walls, objects.
 
-* Multiplayer networking via shared memory to python networking modules allowing multiple clients to interact in the same game world.
+* Multiplayer networking via shared memory to python networking modules with multiple streams for communication via multithreading.
 
 ## Following video demonstrates how raycasting logic works:
 
@@ -27,7 +27,7 @@ This project is a **2.5D** raycasting-based game engine built in C++ (with SFML)
                         └───────────┬────────────────┘
                                     │
                          RECV shm   │   SEND shm
-                   (game reads ↓)   │   (game writes ↑)
+                   (game reads  )   │   (game writes  )
                                     │
                         ┌───────────┴────────────────┐
                         │   C++ Raycasting Engine    │
@@ -39,7 +39,8 @@ This project is a **2.5D** raycasting-based game engine built in C++ (with SFML)
                         │     to SEND shm            │
                         └────────────────────────────┘
 ```
-## Demo of two clients POV(couldn't control both at a time on same window while recording):
+## Demo of two clients POV
+(couldn't control both at a time on same window):
 
 ![multiagent](images/multiagent.gif)
 
